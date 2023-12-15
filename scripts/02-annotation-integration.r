@@ -106,3 +106,25 @@ ElbowPlot(covid, ndims = 40) #This implies going for around 30 might be OK.
 
 saveRDS(covid, "../data/byproducts/03-covid-integrated.rds")
 
+
+#################################UMAP Clustering################################
+
+covid <- readRDS("../data/byproducts/03-covid-integrated.rds")
+gc()
+
+#Graph-based clustering:
+covid <- FindNeighbors(covid, dims = 1:40, verbose = T)
+covid <- FindClusters(covid, verbose = T,
+                      resolution = 0.8)
+
+Idents(covid) <- "integrated_snn_res.0.8" #This one seems to make the most sense.
+
+#Non-linear dimensional reduction:
+covid <- RunUMAP(covid, dims = 1:40, return.model = T)
+Idents(covid) <- "integrated_snn_res.0.8"
+DimPlot(covid, reduction = "umap", label = T, repel = T, raster = T, group.by = "azimuthNames") + NoLegend()
+DimPlot(covid, reduction = "umap", split.by = "severity") + NoLegend()
+DimPlot(covid, reduction = "umap", split.by = "sample") + NoLegend()
+gc()
+
+saveRDS(covid, "../data/byproducts/04-covid-clustered.rds")
