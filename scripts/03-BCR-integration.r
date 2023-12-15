@@ -122,7 +122,7 @@ gc()
 
 #Saving some tables:
 write.table(BCR@meta.data[order(BCR@meta.data[["Frequency"]],decreasing=TRUE),],
-            file = "BCR-frequency.tsv", sep="\t", append = FALSE, quote=FALSE, 
+            file = "../results/tables/BCR-frequency.tsv", sep="\t", append = FALSE, quote=FALSE, 
             row.names = FALSE, col.names = TRUE)
 
 #Tables with cell numbers for each sample:
@@ -133,5 +133,5 @@ rownames(cells) <- cells$azimuthNames
 cells$azimuthNames <- NULL
 cells <- as.matrix(cells)
 cells <- proportions(as.matrix(cells), margin = 2) * 100
-write.table(cells, file = "cell-proportions-samples.tsv", sep = "\t", col.names = NA)
+write.table(cells, file = "../results/tables/cell-proportions-samples.tsv", sep = "\t", col.names = NA)
 

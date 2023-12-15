@@ -264,7 +264,7 @@ gc()
 
 #Cell cycle scoring#
 #Loading cell cycle markers:
-load("cycle.rda")
+load("../data/byproducts/cycle.rda")
 
 #Normalizing the counts:
 covid <- NormalizeData(covid)

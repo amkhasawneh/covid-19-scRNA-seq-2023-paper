@@ -34,14 +34,14 @@ for (i in 1:length(split.covid)) {
 
 #Saving separate RDS files for each sample to upload to Azimuth:
 for (i in names(split.covid)) {
-  saveRDS(split.covid[[i]], file = paste0(names(split.covid[i]), ".rds"))
+  saveRDS(split.covid[[i]], file = paste0("../data/byproducts/", names(split.covid[i]), ".rds"))
   names(split.covid[i])
 }
 
 #After uploading the separate RDS files to Azimuth, incorporating the results
 #by importing Azimuth's results for each sample:
 for (i in names(split.covid)) {
-  split.covid[[i]]$azimuthNames <- read.table(paste0(i, "_azimuth_pred.tsv"), sep = "\t", header = T)$predicted.celltype.l2
+  split.covid[[i]]$azimuthNames <- read.table(paste0("../data/byproducts/", i, "_azimuth_pred.tsv"), sep = "\t", header = T)$predicted.celltype.l2
 }
 
 gc()
