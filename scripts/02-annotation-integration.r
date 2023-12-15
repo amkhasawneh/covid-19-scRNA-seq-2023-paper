@@ -56,3 +56,53 @@ remove(critical119_Patient5, critical120_Patient6, critical238_Patient4, critica
 
 gc()
 
+#################################Integration####################################
+
+#Importing the split file:
+split.covid <- readRDS("../data/byproducts/02-split-scaled.rds")
+
+#Selecting the most variable features for integration:
+integ.feat <- SelectIntegrationFeatures(object.list = split.covid, nfeatures = 5000)
+
+#Performing canonical correlation analysis (CCA), and identifying and filtering anchors:
+anchors <- FindIntegrationAnchors(object.list = split.covid, anchor.features = integ.feat,
+                                  verbose = T)                  #
+#These two steps had to be done
+saveRDS(anchors, "../data/byproducts/anchors.rds")                                 #on the Linux machine,
+#as an RScript,
+#due to memory restrictions.
+remove(covid, split.covid, integ.feat)                          ###(They need a ton of RAM!)
+gc()                                                            
+#
+#
+anchors <- readRDS("../data/byproducts/anchors.rds")                               #
+#  
+#Integrating across conditions:                             #    
+covid <- IntegrateData(anchorset = anchors, verbose = T)###             
+
+remove(anchors)
+gc()
+
+saveRDS(covid, "../data/byproducts/03-covid-integrated.rds")
+covid <- readRDS("../data/byproducts/03-covid-integrated.rds")
+
+DefaultAssay(covid) <- "integrated"
+
+#Scaling the data:
+covid <- ScaleData(covid, features = rownames(covid))
+
+#Linear dimensional reduction:
+covid <- RunPCA(covid, features = VariableFeatures(object = covid), verbose = T)
+
+#Examining PCA results:
+print(covid[["pca"]], dims = 1:5, nfeatures = 5)
+VizDimLoadings(covid, dims = 1:2, reduction = "pca")
+DimPlot(covid, reduction = "pca", split.by = "severity")
+DimPlot(covid, reduction = "pca")
+DimHeatmap(covid, dims = 1:15, cells = 500, balanced = TRUE)
+
+#Determining the dimensionality of the data:
+ElbowPlot(covid, ndims = 40) #This implies going for around 30 might be OK.
+
+saveRDS(covid, "../data/byproducts/03-covid-integrated.rds")
+
