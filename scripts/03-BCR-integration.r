@@ -69,3 +69,69 @@ remove(critical119, critical120, critical213,
        moderate124, moderate138, moderate272, moderate303,
        healthy1, healthy2, healthy3, contig.list)
 gc()
+
+################################Integration with Seurat object##################
+
+B.combined <- readRDS("../data/byproducts/BCR-combined-contigs.rds")
+
+#Loading clustered Seurat object:
+covid <- readRDS("../data/byproducts/04-covid-clustered.rds")
+
+#Changing the current Idents:
+Idents(covid) <- "azimuthNames"
+
+#Subsetting B-cells:
+BCR <- covid[,grep("(B)|(Plasmablast)", covid$azimuthNames)]
+
+#Combining Seurat object with BCR table:
+BCR <- combineExpression(B.combined, BCR, cloneCall="gene", filterNA = T)
+head(BCR@meta.data)
+gc()
+
+#Adjusting the sample variable's order:
+BCR$sample <- factor(BCR$sample, levels = c("healthy1_control1", "healthy2_control2", "healthy3_control3",
+                                            "moderate272_Patient1", "critical293_Patient1", 
+                                            "moderate303_Patient2", "critical308_Patient2",
+                                            "mild186_Patient3", "critical213_Patient3",
+                                            "mild227_Patient4", "critical238_Patient4",
+                                            "critical119_Patient5", "moderate138_Patient5",
+                                            "critical120_Patient6", "moderate124_Patient6"))
+
+#Modifying cell type order:
+BCR$azimuthNames <- factor(BCR$azimuthNames, levels = c("B intermediate", "B memory", "B naive", "Plasmablast"))
+
+#Adding V and J gene usage:
+BCR$HChain <- vapply(strsplit(BCR$CTgene, "[_]"), "[", "", 1)
+BCR$HChain <- sub("(NA)", NA, BCR$HChain)
+BCR$v_gene <- vapply(strsplit(BCR$HChain, "[.]"), "[", "", 1)
+BCR$j_gene <- vapply(strsplit(BCR$HChain, "[.]"), "[", "", 2)
+BCR$c_gene <- vapply(strsplit(BCR$HChain, "[.]"), "[", "", 4)
+
+BCR$LChain <- vapply(strsplit(BCR$CTgene, "[_]"), "[", "", 2)
+BCR$LChain <- sub("(NA)", NA, BCR$LChain)
+BCR$lkv_gene <- vapply(strsplit(BCR$LChain, "[.]"), "[", "", 1)
+BCR$lkj_gene <- vapply(strsplit(BCR$LChain, "[.]"), "[", "", 2)
+BCR$lkc_gene <- vapply(strsplit(BCR$LChain, "[.]"), "[", "", 3)
+
+saveRDS(BCR, "../data/byproducts/05-BCR-combined.rds")
+
+BCR <- readRDS("../data/byproducts/05-BCR-combined.rds")
+
+remove(covid, B.combined, abundace, top.clonotypes, longest)
+gc()
+
+#Saving some tables:
+write.table(BCR@meta.data[order(BCR@meta.data[["Frequency"]],decreasing=TRUE),],
+            file = "BCR-frequency.tsv", sep="\t", append = FALSE, quote=FALSE, 
+            row.names = FALSE, col.names = TRUE)
+
+#Tables with cell numbers for each sample:
+cells <- BCR@meta.data %>%
+  group_by(sample, azimuthNames) %>% count() %>% 
+  spread(key = sample, value = n) %>% as.data.frame()
+rownames(cells) <- cells$azimuthNames
+cells$azimuthNames <- NULL
+cells <- as.matrix(cells)
+cells <- proportions(as.matrix(cells), margin = 2) * 100
+write.table(cells, file = "cell-proportions-samples.tsv", sep = "\t", col.names = NA)
+
