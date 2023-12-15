@@ -117,7 +117,7 @@ saveRDS(BCR, "../data/byproducts/05-BCR-combined.rds")
 
 BCR <- readRDS("../data/byproducts/05-BCR-combined.rds")
 
-remove(covid, B.combined, abundace, top.clonotypes, longest)
+remove(covid, B.combined)
 gc()
 
 #Saving some tables:
@@ -127,11 +127,12 @@ write.table(BCR@meta.data[order(BCR@meta.data[["Frequency"]],decreasing=TRUE),],
 
 #Tables with cell numbers for each sample:
 cells <- BCR@meta.data %>%
-  group_by(sample, azimuthNames) %>% count() %>% 
+  group_by(sample, azimuthNames) %>% dplyr::count() %>% 
   spread(key = sample, value = n) %>% as.data.frame()
 rownames(cells) <- cells$azimuthNames
 cells$azimuthNames <- NULL
 cells <- as.matrix(cells)
+write.table(cells, file = "../results/tables/cell-numbers-samples.tsv", sep = "\t", col.names = NA)
 cells <- proportions(as.matrix(cells), margin = 2) * 100
 write.table(cells, file = "../results/tables/cell-proportions-samples.tsv", sep = "\t", col.names = NA)
 
